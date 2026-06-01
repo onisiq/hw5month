@@ -23,3 +23,18 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 
+class ProductReviewSerializer(serializers.ModelSerializer):
+    reviews = ReviewSerializer(
+        source='review_set',
+        many=True,
+        read_only=True
+
+    )
+
+    rating = serializers.ReadOnlyField()
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+
+

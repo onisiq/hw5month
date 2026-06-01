@@ -3,7 +3,8 @@ from  rest_framework.decorators import api_view
 from  rest_framework.response import Response
 from rest_framework import status
 from .models import Product, Review, Category
-from .serializers import ProductSerializer, ReviewSerializer, CategorySerializer
+from .serializers import ProductSerializer, ReviewSerializer, CategorySerializer, ProductReviewSerializer
+
 
 # Create your views here.
 @api_view(['GET'])
@@ -54,3 +55,9 @@ def category_list_api_view(request):
     categories = Category.objects.all()
     data = CategorySerializer(categories, many=True).data
     return Response(data=data)
+
+@api_view(['GET'])
+def product_reviews_api_view(request):
+    products = Product.objects.all()
+    data = ProductReviewSerializer(products, many=True).data
+    return Response(data)
