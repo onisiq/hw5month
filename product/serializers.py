@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Category, Product, Review
+from django.db.models import Avg
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,7 +14,12 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CategorySerializer(serializers.ModelSerializer):
+    products_count = serializers.ReadOnlyField()
     class Meta:
         model = Category
         fields = '__all__'
+
+
+
+
 
