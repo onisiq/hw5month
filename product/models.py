@@ -6,9 +6,9 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
 
     @property
-    def count_products(self):
-        return self.products.count()
-
+    def products_count(self):
+        return self.product_set.count()
+    
     @property
     def product_list(self):
         return [i.name for i in self.products.all()]
@@ -49,10 +49,9 @@ class Review(models.Model):
         default=5
     )
 
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE
-    )
+category = models.ForeignKey(
+    Category,
+    on_delete=models.CASCADE,
+    related_name='products'
 
-    def __str__(self):
-        return self.text
+)

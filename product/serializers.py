@@ -17,9 +17,7 @@ class CategorySerializer(serializers.ModelSerializer):
     products_count = serializers.ReadOnlyField()
     class Meta:
         model = Category
-        fields = '__all__'
-
-
+        fields = 'id name products_count'.split()
 
 
 
