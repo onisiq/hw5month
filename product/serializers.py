@@ -22,7 +22,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductReviewSerializer(serializers.ModelSerializer):
     reviews = ReviewSerializer(
-        source='review_set',
+        source='reviews',
         many=True,
         read_only=True
 

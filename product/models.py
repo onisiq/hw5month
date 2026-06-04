@@ -26,7 +26,8 @@ class Product(models.Model):
 
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='products'
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -43,15 +44,13 @@ class Product(models.Model):
 
 
 class Review(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
     text = models.TextField()
     star = models.IntegerField(
         choices=[(i, i) for i in range(1, 11)],
         default=5
     )
-
-category = models.ForeignKey(
-    Category,
-    on_delete=models.CASCADE,
-    related_name='products'
-
-)

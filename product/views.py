@@ -44,14 +44,11 @@ def review_detail_api_view(request, id):
         review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     elif request.method == 'PUT':
-        review.title = request.data.get('title',)
-        review.text = request.data.get('text',)
-        review.rating = request.data.get('rating',)
-        review.save()
-        return Response(
-            status=status.HTTP_201_CREATED,
-            data=ReviewSerializer(review).data
-        )
+        serializer = ReviewSerializer(review, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data=serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 
@@ -60,28 +57,24 @@ def review_detail_api_view(request, id):
     data = ReviewSerializer(review, many=False).data
     return Response(data=data)
 
-@api_view(['GET'])
+@api_view(['GET','PUT','DELETE'])
 def category_detail_api_view(request, id):
     try:
         category = Category.objects.get(id=id)
     except Category.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     if request.method == 'GET':
-        data = CategorySerializer(category, many =False).data
+        data = CategorySerializer(category, many=False).data
         return Response(data=data)
     elif request.method == 'DELETE':
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     elif request.method == 'PUT':
-        category.name = request.data.get('name',)
-        category.description = request.data.get('description',)
-        category.save()
-        return Response(
-            status=status.HTTP_201_CREATED,
-            data=CategorySerializer(category).data
-        )
-    
-
+        serializer = CategorySerializer(category, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data=serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     data = CategorySerializer(category, many=False).data
     return Response(data=data)
