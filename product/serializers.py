@@ -20,7 +20,6 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = 'id name products_count'.split()
 
 
-
 class ProductReviewSerializer(serializers.ModelSerializer):
     reviews = ReviewSerializer(
         source='review_set',
