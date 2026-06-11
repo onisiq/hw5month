@@ -1,22 +1,12 @@
-from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Product, Review, Category
 from .serializers import ProductSerializer, ReviewSerializer, CategorySerializer, ProductReviewSerializer
-from django.db import transaction
 
-# Create your views here.
-
-# ============ PRODUCT VIEWS ============
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def product_detail_api_view(request, id):
-    """
-    GET: Получить детали продукта
-    PUT: Обновить продукт (валидация: name, price > 0, release_date, category exists)
-    DELETE: Удалить продукт
-    """
     try:
         product = Product.objects.get(id=id)
     except Product.DoesNotExist:
@@ -52,17 +42,12 @@ def product_detail_api_view(request, id):
 
 @api_view(['GET', 'POST'])
 def product_list_api_view(request):
-    """
-    GET: Получить все продукты
-    POST: Создать новый продукт (валидация: name, price > 0, release_date, category exists)
-    """
     if request.method == 'GET':
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
         return Response(data=serializer.data)
     
     elif request.method == 'POST':
-        # Проверка на пустой запрос
         if not request.data:
             return Response(
                 {'error': 'Тело запроса не может быть пустым.'},
@@ -82,15 +67,8 @@ def product_list_api_view(request):
         )
 
 
-# ============ REVIEW VIEWS ============
-
 @api_view(['GET', 'PUT', 'DELETE'])
 def review_detail_api_view(request, id):
-    """
-    GET: Получить детали отзыва
-    PUT: Обновить отзыв (валидация: text not empty, star 1-10, product exists)
-    DELETE: Удалить отзыв
-    """
     try:
         review = Review.objects.get(id=id)
     except Review.DoesNotExist:
@@ -126,17 +104,12 @@ def review_detail_api_view(request, id):
 
 @api_view(['GET', 'POST'])
 def review_list_api_view(request):
-    """
-    GET: Получить все отзывы
-    POST: Создать новый отзыв (валидация: text not empty, star 1-10, product exists)
-    """
     if request.method == 'GET':
         reviews = Review.objects.all()
         serializer = ReviewSerializer(reviews, many=True)
         return Response(data=serializer.data)
     
     elif request.method == 'POST':
-        # Проверка на пустой запрос
         if not request.data:
             return Response(
                 {'error': 'Тело запроса не может быть пустым.'},
@@ -156,15 +129,8 @@ def review_list_api_view(request):
         )
 
 
-# ============ CATEGORY VIEWS ============
-
 @api_view(['GET', 'PUT', 'DELETE'])
 def category_detail_api_view(request, id):
-    """
-    GET: Получить детали категории
-    PUT: Обновить категорию (валидация: name not empty, unique name)
-    DELETE: Удалить категорию
-    """
     try:
         category = Category.objects.get(id=id)
     except Category.DoesNotExist:
@@ -200,17 +166,12 @@ def category_detail_api_view(request, id):
 
 @api_view(['GET', 'POST'])
 def category_list_api_view(request):
-    """
-    GET: Получить все категории
-    POST: Создать новую категорию (валидация: name not empty, unique name)
-    """
     if request.method == 'GET':
         categories = Category.objects.all()
         serializer = CategorySerializer(categories, many=True)
         return Response(data=serializer.data)
     
     elif request.method == 'POST':
-        # Проверка на пустой запрос
         if not request.data:
             return Response(
                 {'error': 'Тело запроса не может быть пустым.'},
@@ -230,13 +191,8 @@ def category_list_api_view(request):
         )
 
 
-# ============ PRODUCT REVIEWS VIEW ============
-
 @api_view(['GET'])
 def product_reviews_api_view(request):
-    """
-    GET: Получить все продукты со всеми их отзывами
-    """
     products = Product.objects.all()
     serializer = ProductReviewSerializer(products, many=True)
     return Response(data=serializer.data)

@@ -7,11 +7,7 @@ class Category(models.Model):
 
     @property
     def products_count(self):
-        return self.product_set.count()
-    
-    @property
-    def product_list(self):
-        return [i.name for i in self.products.all()]
+        return self.products.count()
 
     def __str__(self):
         return self.name
@@ -35,7 +31,7 @@ class Product(models.Model):
 
     @property
     def average_rating(self):
-        return self.review_set.aggregate(
+        return self.reviews.aggregate(
             Avg('star')
         )['star__avg']
 

@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from .models import Category, Product, Review
-from django.db.models import Avg
 from datetime import date
-from django.core.exceptions import ValidationError
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -25,17 +23,13 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'products_count')
 
     def validate_name(self, value):
-        """Проверка уникальности названия категории"""
         if self.instance:
-            # При обновлении проверяем, что имя не используется другими категориями
             if Category.objects.filter(name__iexact=value).exclude(pk=self.instance.pk).exists():
                 raise serializers.ValidationError("Категория с таким названием уже существует.")
         else:
-            # При создании проверяем полную уникальность
             if Category.objects.filter(name__iexact=value).exists():
                 raise serializers.ValidationError("Категория с таким названием уже существует.")
         
-        # Проверка на спецсимволы
         if not value.replace(' ', '').replace('-', '').replace('_', '').isalnum():
             raise serializers.ValidationError("Названия категории должны содержать только буквы, цифры, пробелы, дефисы и подчеркивания.")
         
@@ -108,11 +102,9 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
     def validate_name(self, value):
-        """Проверка названия продукта"""
         if not value.strip():
             raise serializers.ValidationError("Название продукта не может быть пустым.")
         
-        # Проверка на недопустимые символы
         forbidden_chars = ['<', '>', '{', '}', '|', '\\', '^', '`']
         if any(char in value for char in forbidden_chars):
             raise serializers.ValidationError("Название содержит недопустимые символы.")
@@ -120,19 +112,16 @@ class ProductSerializer(serializers.ModelSerializer):
         return value.strip()
 
     def validate_description(self, value):
-        """Проверка описания продукта"""
         if value and len(value.strip()) == 0:
             return None
         return value
 
     def validate_release_date(self, value):
-        """Проверка даты выпуска"""
         if value > date.today():
             raise serializers.ValidationError("Дата выпуска не может быть в будущем.")
         return value
 
     def validate_price(self, value):
-        """Проверка цены"""
         if value <= 0:
             raise serializers.ValidationError("Цена должна быть больше нуля.")
         if value > 999999.99:
@@ -140,7 +129,6 @@ class ProductSerializer(serializers.ModelSerializer):
         return value
 
     def validate_rating(self, value):
-        """Проверка рейтинга"""
         if value < 0:
             raise serializers.ValidationError("Рейтинг не может быть отрицательным.")
         if value > 10:
@@ -148,7 +136,6 @@ class ProductSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        """Проверка на уровне объекта"""
         if not data.get('category'):
             raise serializers.ValidationError({'category': 'Категория продукта обязательна.'})
         
@@ -189,21 +176,18 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ('id', 'product', 'text', 'star')
 
     def validate_text(self, value):
-        """Проверка текста отзыва"""
         if not value or not value.strip():
             raise serializers.ValidationError("Текст отзыва не может быть пустым.")
         
         if len(value.strip()) < 3:
             raise serializers.ValidationError("Текст отзыва должен содержать минимум 3 символа.")
         
-        # Проверка на спам (много одинаковых символов)
         if len(set(value)) <= 2:
             raise serializers.ValidationError("Текст отзыва содержит слишком много одинаковых символов.")
         
         return value.strip()
 
     def validate_star(self, value):
-        """Проверка рейтинга звезд"""
         if not isinstance(value, int):
             raise serializers.ValidationError("Рейтинг должен быть целым числом.")
         
@@ -213,7 +197,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        """Проверка на уровне объекта"""
         if not data.get('product'):
             raise serializers.ValidationError({'product': 'Продукт обязателен для отзыва.'})
         
@@ -241,4 +224,3 @@ class ProductReviewSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         )
-
