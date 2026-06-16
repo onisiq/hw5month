@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Category, Product, Review
+from .models import Category, Product, Review, CustomUser, ConfirmationCode
 from datetime import date
+from django.contrib.auth.hashers import make_password, check_password
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -224,3 +225,159 @@ class ProductReviewSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         )
+
+
+# ============ USER AUTHENTICATION SERIALIZERS ============
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        min_length=6,
+        error_messages={
+            'required': 'Пароль обязателен.',
+            'min_length': 'Пароль должен быть минимум 6 символов.',
+        }
+    )
+    password_confirm = serializers.CharField(
+        write_only=True,
+        required=True,
+        error_messages={
+            'required': 'Подтверждение пароля обязательно.',
+        }
+    )
+    name = serializers.CharField(
+        max_length=255,
+        required=True,
+        error_messages={
+            'required': 'Имя обязательно.',
+            'max_length': 'Имя не может быть длиннее 255 символов.',
+        }
+    )
+    email = serializers.EmailField(
+        required=True,
+        error_messages={
+            'required': 'Email обязателен.',
+            'invalid': 'Email имеет неверный формат.',
+        }
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'name', 'email', 'password', 'password_confirm')
+        read_only_fields = ('id',)
+
+    def validate_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Имя не может быть пустым.")
+        return value.strip()
+
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Пользователь с таким email уже существует.")
+        return value.lower()
+
+    def validate(self, data):
+        if data['password'] != data['password_confirm']:
+            raise serializers.ValidationError({
+                'password_confirm': 'Пароли не совпадают.'
+            })
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop('password_confirm')
+        password = validated_data.pop('password')
+        
+        user = CustomUser.objects.create(
+            **validated_data,
+            password=make_password(password),
+            is_active=False
+        )
+        
+        # Создаём код подтверждения
+        code = ConfirmationCode.generate_code()
+        ConfirmationCode.objects.create(
+            user=user,
+            code=code
+        )
+        
+        return user
+
+
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        required=True,
+        error_messages={
+            'required': 'Email обязателен.',
+            'invalid': 'Email имеет неверный формат.',
+        }
+    )
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        error_messages={
+            'required': 'Пароль обязателен.',
+        }
+    )
+
+    def validate(self, data):
+        email = data.get('email').lower()
+        password = data.get('password')
+
+        try:
+            user = CustomUser.objects.get(email__iexact=email)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError({
+                'email': 'Пользователь с таким email не найден.'
+            })
+
+        if not check_password(password, user.password):
+            raise serializers.ValidationError({
+                'password': 'Неверный пароль.'
+            })
+
+        if not user.is_active:
+            raise serializers.ValidationError({
+                'email': 'Пожалуйста, подтвердите ваш email перед входом.'
+            })
+
+        data['user'] = user
+        return data
+
+
+class ConfirmationCodeSerializer(serializers.Serializer):
+    code = serializers.CharField(
+        max_length=6,
+        min_length=6,
+        required=True,
+        error_messages={
+            'required': 'Код подтверждения обязателен.',
+            'min_length': 'Код должен быть 6 символов.',
+            'max_length': 'Код должен быть 6 символов.',
+        }
+    )
+
+    def validate_code(self, value):
+        if not value.isdigit():
+            raise serializers.ValidationError("Код должен состоять только из цифр.")
+        return value
+
+    def validate(self, data):
+        code = data.get('code')
+
+        try:
+            confirmation_code = ConfirmationCode.objects.get(code=code)
+        except ConfirmationCode.DoesNotExist:
+            raise serializers.ValidationError({
+                'code': 'Неверный код подтверждения.'
+            })
+
+        data['confirmation_code'] = confirmation_code
+        return data
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'name', 'email', 'is_active', 'created_at')
+        read_only_fields = ('id', 'is_active', 'created_at')
